@@ -1,0 +1,104 @@
+services:
+  # 1. PostgreSQL — база данных
+  postgres:
+    # Образ PostgreSQL 16 на Alpine Linux (лёгкий)
+    image: postgres:16-alpine
+    
+    # Переменные окружения для инициализации БД
+    environment:
+      # POSTGRES_USER — имя администратора БД
+      # ${DB_USER:-postgres} — берёт из .env или по умолчанию "postgres"
+      POSTGRES_USER: ${DB_USER:-postgres}
+      
+      # POSTGRES_PASSWORD — пароль администратора
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      
+      # POSTGRES_DB — имя базы данных, которая создаётся при старте
+      POSTGRES_DB: ${DB_NAME:-game_portal}
+    
+    # Проброс порта: хост:контейнер
+    # Порт можно переопределить через переменную DB_PORT
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    
+    # Том для постоянного хранения данных БД
+    # Данные не удаляются при остановке контейнера
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    
+    # Проверка здоровья контейнера
+    # pg_isready — встроенная утилита PostgreSQL для проверки готовности
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s      # Проверка каждые 5 секунд
+      timeout: 5s       # Таймаут проверки
+      retries: 10       # 10 неудачных попыток до пометки "unhealthy"
+
+  # 2. Backend — Express API сервер
+  backend:
+    # Сборка образа из Dockerfile в папке ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    
+    # Проброс порта: хост:контейнер
+    ports:
+      - "${API_PORT:-4000}:4000"
+    
+    # Переменные окружения для приложения
+    environment:
+      # Порт, на котором работает Express
+      PORT: "4000"
+      
+      # Строка подключения к PostgreSQL
+      # postgres — имя сервиса (Docker DNS разрешит его в IP контейнера)
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-game_portal}?schema=public
+      
+      # Секретный ключ для JWT токенов (из .env или значение по умолчанию)
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-me}
+      
+      # Разрешённый источник для CORS (фронтенд)
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
+    
+    # Зависимость от PostgreSQL с проверкой здоровья
+    # Бэкенд запустится ТОЛЬКО после того, как БД будет готова
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # 3. Frontend — React SPA на Nginx
+  frontend:
+    # Сборка образа из Dockerfile в папке ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    
+    # Проброс порта: хост:контейнер
+    # Nginx внутри контейнера слушает порт 80
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    
+    # Зависимость от бэкенда (не строгая, но порядок запуска важен)
+    depends_on:
+      - backend
+
+# Volumes — постоянное хранилище данных
+volumes:
+  # Том для PostgreSQL. Сохраняет данные БД между перезапусками
+  postgres_data:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
