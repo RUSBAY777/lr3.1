@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now()) @map("created_at")
+  reviews   Review[]
+
+  @@map("users")
+}
+
+model Genre {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  games Game[]
+
+  @@map("genres")
+}
+
+model Game {
+  id          Int      @id @default(autoincrement())
+  title       String
+  releaseYear Int      @map("release_year")
+  genreId     Int      @map("genre_id")
+  genre       Genre    @relation(fields: [genreId], references: [id], onDelete: Restrict)
+  reviews     Review[]
+
+  @@map("games")
+}
+
+model Review {
+  id         Int      @id @default(autoincrement())
+  gameId     Int      @map("game_id")
+  userId     Int      @map("user_id")
+  reviewText String   @map("review_text")
+  rating     Int
+  createdAt  DateTime @default(now()) @map("created_at")
+  game       Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("reviews")
+}

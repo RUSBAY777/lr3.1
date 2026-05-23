@@ -1,0 +1,23 @@
+:root {
+  color-scheme: dark;
+  --bg: #0c0f14;
+  --panel: #141a24;
+  --panel-2: #1b2433;
+  --accent: #6ee7ff;
+  --accent-2: #a78bfa;
+  --text: #e8edf7;
+  --muted: #94a3b8;
+  --danger: #fb7185;
+  --ok: #34d399;
+  --border: rgba(255, 255, 255, 0.08);
+  --chart-grid: rgba(255, 255, 255, 0.1);
+  --chart-tooltip-bg: var(--panel);
+  --chart-tooltip-border: var(--border);
+  --chart-palette-1: var(--accent);
+  --chart-palette-2: var(--accent-2);
+  --chart-palette-3: var(--ok);
+  --chart-palette-4: var(--danger);
+  --chart-palette-5: #fbbf24;
+  --chart-palette-6: #38bdf8;
+  font-family: "Outfit", system-ui, sans-serif;
+}
